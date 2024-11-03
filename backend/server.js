@@ -89,7 +89,7 @@ app.post('/login', (req, res) =>{
         if (results.length > 0) {
             res.json({ success: true, message: 'Đăng nhập thành công', user: results[0] });
         } else {
-            res.json({ success: false, message: 'Đăng nhập thất bại' });
+            res.json({ success: false, message: 'Tài khoản hoặc mật khẩu sai' });
         }
     });
 });
@@ -117,6 +117,34 @@ app.put('/reset-password', express.json(), (req, res) => {
             res.json({ success: true, message: 'Đã cập nhật mật khẩu' });
         });
     });
+
+});
+// Endpoint xóa tài khoản
+app.delete('/delete-account', express.json(), (req, res) => {
+    const { username } = req.body;
+    //Kiểm tra xem user có tồn tại không
+    const checkQuery = 'SELECT * FROM users WHERE username = ?';
+    db.query(checkQuery, [username], (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ success: false, message: 'Lỗi server' });
+        }
+        if (results.length === 0) {
+            return res.json({ success: false, message: 'Không tìm thấy người dùng' });
+        }
+        //Nếu có thì xóa
+        const deleteQuery = 'DELETE FROM users WHERE username = ?';
+        db.query(deleteQuery, [username], (err, kq) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ success: false, message: 'Lỗi server' });
+            }
+            res.json({ success: true, message: 'Đã xóa tài khoản' });
+        });
+    });
+
+
+
 
 });
 

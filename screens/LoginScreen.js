@@ -18,7 +18,7 @@ const LoginScreen = ({ navigation }) => {
         
             console.log('Đăng nhập:', username, password);
             //Ktra phản hồi
-            if (response.status === 200) {
+            if (response.status === 200 && response.data.success) {
                 navigation.navigate('Screen01', { user: response.data.user});
             } else {
                 alert('Đăng nhập thất bại: ' + response.data.message);

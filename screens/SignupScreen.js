@@ -10,6 +10,7 @@ const SignupScreen = ({ navigation }) => {
     const [modalVisibility, setModalVisibility] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [imageUri, setImageUri] = useState(null);
+    const [isSignupSuccess, setIsSignupSuccess] = useState(false); // Thêm biến này
 
     const handleImagePicker = async () => {
         if (Platform.OS === 'web') {
@@ -47,6 +48,7 @@ const SignupScreen = ({ navigation }) => {
     const handleSignup = async () => {
         if (!username || !password || !photo) {
             setErrorMessage('Vui lòng nhập đầy đủ thông tin');
+            setIsSignupSuccess(false);  // đăng ký không thành công
             setModalVisibility(true);
             return;
         }
@@ -69,14 +71,17 @@ const SignupScreen = ({ navigation }) => {
             });
             if (response.status === 200) {
                 setErrorMessage('Đăng ký thành công');
+                setIsSignupSuccess(true); // Đăng ký thành công
                 setModalVisibility(true);
             } else {
                 setErrorMessage('Đăng ký thất bại: ' + response.data.message);
+                setIsSignupSuccess(false); // Đăng ký ko thành công
                 setModalVisibility(true);
             }
         } catch (e) {
             console.error('Lỗi: ', e);
             setErrorMessage('Đã xảy ra lỗi trong quá trình đăng ký.');
+            setIsSignupSuccess(false); // Đăng ký không thành công
             setModalVisibility(true);
         }
     };
@@ -122,7 +127,11 @@ const SignupScreen = ({ navigation }) => {
                         <Text style={styles.modalMessage}>{errorMessage || "Đăng ký thành công"}</Text>
                         <View style={styles.modalButtons}>
                        
-                            <TouchableOpacity style={styles.modalButton} onPress={() => { setModalVisibility(false), navigation.navigate('Login') }}>
+                            <TouchableOpacity style={styles.modalButton} onPress={() => {
+                                setModalVisibility(false);
+                                if (isSignupSuccess) { // Chỉ điều hướng khi đăng ký thành công
+                                    navigation.navigate('Login');
+                                } }}>
                                 <Text style={styles.modalButtonText2}>Đồng ý</Text>
                             </TouchableOpacity>
                         </View>
@@ -140,7 +149,7 @@ const styles = StyleSheet.create({
     input: { width: '80%', padding: 10, marginVertical: 10, borderWidth: 1, borderRadius: 5 },
     button: { backgroundColor: 'blue', padding: 15, borderRadius: 5 },
     buttonText: { color: 'white' },
-    link: { color: 'blue', marginTop: 10 },
+    link: { color: 'blue', marginTop: 50 },
     photoButton: { alignItems: 'center', justifyContent: 'center', width: 150, height: 150, backgroundColor: '#e0e0e0', borderRadius: 75, marginBottom: 20 },
     photo: { width: 150, height: 150, borderRadius: 75 },
      modalContainer: {
