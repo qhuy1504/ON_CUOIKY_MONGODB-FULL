@@ -1,201 +1,236 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, FlatList, Image, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Modal, TextInput, Platform } from "react-native";
 import axios from "axios";
+import * as ImagePicker from 'expo-image-picker';
+// npm install expo-image-picker react-native-image-picker
+import { launchImageLibrary } from 'react-native-image-picker';
 
 const Screen01 = ({ route, navigation }) => {
-    const [categories, setCategories] = useState([]);
-    const [locations, setLocations] = useState([]);
-    const [categoriesapi, setCategoriesapi] = useState([]);
-    const [locationsapi, setLocationsapi] = useState([]);
-    const [search, setSearch] = useState('');
-    const [filteredCategories, setFilteredCategories] = useState([]);
-    const { user } = route.params || 'Không tìm thấy user';
-    useEffect(() => {
-        setCategories([
-            { name: 'Resort', image: require('../img/resort.png') },
-            { name: 'Homestay', image: require('../img/homestay.png') },
-            { name: 'Hotel', image: require('../img/hotel.png') },
-            { name: 'Lodge', image: require('../img/lodge.png') },
-            { name: 'Villa', image: require('../img/villa.png') },
-            { name: 'Apartement', image: require('../img/apartment.png') },
-            { name: 'Hostel', image: require('../img/hostel.png') },
-            { name: 'See all', image: require('../img/seeall.png') }
-        ]);
-        setLocations([
-            { image: require('../img/photo1.png') },
-            { image: require('../img/photo2.png') },
-            { image: require('../img/photo3.png') },
-            { image: require('../img/photo4.png') },
-            { image: require('../img/photo5.png') },
-            { image: require('../img/photo1.png') },
-
-        ]);
-        axios.get('https://671cab6e09103098807aca53.mockapi.io/dulich/v1/category').then((response) => {
-            setCategoriesapi(response.data);
-            setFilteredCategories(response.data);
-            
-        });
-        axios.get('https://671cab6e09103098807aca53.mockapi.io/dulich/v1/location').then((response) => {
-            setLocationsapi(response.data);
-         });
+    const [users, setUsers] = useState([]);
+    const [isModalVisible, setIsModalVisible] = useState(false); // State để điều khiển hiển thị Modal
     
-    }, []);
-    const handleSearch = (text) => {
-        setSearch(text); // Cập nhật state search
-        const filteredData = categoriesapi.filter(item =>
-            item.name.toLowerCase().includes(text.toLowerCase())
-        );
-        setFilteredCategories(filteredData); // Cập nhật kết quả tìm kiếm
+    const [userIdToEdit, setUserIdToEdit] = useState(null); // Lưu trữ ID người dùng cần sửa
+    const [userIdToDelete, setUserIdToDelete] = useState(null); // Lưu trữ ID người dùng cần xóa
+    const [isModalVisible1, setIsModalVisible1] = useState(false); // State để điều khiển hiển thị Modal
+    const [newPassword, setNewPassword] = useState(""); // Lưu mật khẩu mới
+    const [newAvatar, setNewAvatar] = useState(null); // Lưu ảnh đại diện mới
+    const { user } = route.params || { username: "Guest", avatar: null };
+    const [imageUri, setImageUri] = useState(null);
+    const [triggerUpdate, setTriggerUpdate] = useState(false);
+    
+
+    useEffect(() => {
+        if (user.username === "admin") {
+            // Giả sử API endpoint là "/api/users"
+            axios.get("http://localhost:3000/users")
+                .then(response => setUsers(response.data))
+                .catch(error => console.error("Lỗi khi tải danh sách user:", error));
+        }
+    }, [user.username, triggerUpdate]);
+
+ 
+
+    const handleDeleteUser = (userId) => {
+        // Hiển thị Modal xác nhận xóa
+        setUserIdToDelete(userId);
+        setIsModalVisible(true);
     };
-        
+
+    const deleteUser = () => {
+        // API endpoint để xóa user
+        axios.delete(`http://localhost:3000/users/${userIdToDelete}`)
+            .then(() => {
+                setUsers(users.filter(user => user.id !== userIdToDelete)); // Cập nhật danh sách user
+                setIsModalVisible(false); // Đóng Modal sau khi xóa thành công
+                alert("Thành công", "Đã xóa user.");
+            })
+            .catch(error => console.error("Lỗi khi xóa user:", error)); // Log lỗi nếu xảy ra
+    };
+
+    const cancelDelete = () => {
+        setIsModalVisible(false); // Đóng Modal khi hủy
+    };
+
+    const handleEditUser = (userId) => {
+        // Xử lý mở Modal sửa user
+        setUserIdToEdit(userId);
+        setIsModalVisible1(true); // Mở Modal
+    };
+    const cancelEdit = () => {
+        setIsModalVisible1(false); // Đóng Modal khi hủy
+    };
+
+
+    const handleImagePicker = async () => {
+        if (Platform.OS === 'web') {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    setImageUri(URL.createObjectURL(file)); // Để hiển thị ảnh trên web
+                    setNewAvatar(file); // Để upload lên server
+                }
+            };
+            input.click();
+        } else {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 1,
+            });
+
+            if (!result.canceled) {
+                setImageUri(result.assets[0].uri);
+                setImageFile({
+                    uri: result.assets[0].uri,
+                    type: 'image/png', // type của ảnh
+                    name: 'avatar.png', // tên file
+                });
+            }
+        }
+    };
+
+    const handleSaveChanges = async () => {
+        if (!newPassword && !newAvatar) {
+            alert('Vui lòng nhập đầy đủ thông tin');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('password', newPassword); // Nếu muốn cập nhật mật khẩu
+        if (Platform.OS === 'web') {
+            formData.append('avatar', newAvatar);
+        } else {
+            formData.append('avatar', newAvatar);
+        }
+        console.log('newAvatar:', newAvatar);
+
+        try {
+            const response = await axios.put(`http://localhost:3000/users/${userIdToEdit}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            console.log('User updated:', response.data);
+            alert('Đã lưu thay đổi!');
+            // Kích hoạt lại useEffect để tải danh sách mới
+            setTriggerUpdate(prev => !prev);
+            setIsModalVisible1(false); // Mở Modal
+            // Đặt lại các state sau khi cập nhật xong
+            setNewPassword('');
+            setNewAvatar(null);
+            setImageUri(null); // Reset hiển thị ảnh
+        } catch (error) {
+            console.error('Lỗi khi cập nhật user:', error.response?.data || error.message);
+        }
+    };
+
     return (
         <View style={styles.container}>
-            <ScrollView >
             <View style={styles.header}>
-                <View style={styles.header1}>
-                    <Image source={require('../img/logoicon.png')} style={styles.imgHeader} />
-                    <View style={styles.inputContainer}>
-                        <Image source={require('../img/findicon.png')} style={styles.imgSearch} />
-                            <TextInput style={styles.searchBox} placeholder="Search here..."
-                                value={search}
-                                onChangeText={handleSearch}
-
-                            
-                            />
-
-                    </View>
-
-                </View>
-                <View style={styles.header2}>
-                    
-                        <View style={styles.gioiThieu}>
-                            <TouchableOpacity onPress={ ()=>navigation.navigate('Profile', {user})}>
-                            <Image source={user && user.avatar ? { uri: `http://192.168.2.144:3000/uploads/${user.avatar}`  } : require('../img/personicon.png')} style={styles.imgProfile} />
-                            </TouchableOpacity>
-                        <View style={styles.title}>
-                                <Text style={styles.title1}>Welcome !</Text>
-                                <Text style={styles.title2}>{user ? user.username: "Guest"}</Text>
-                        </View>
-                      
-                    </View>
-                    <Image source={require('../img/ringicon.png')} style={styles.imgBell} />
-
-                </View>
-
-            </View>
-            <View style = {styles.categoryContainer}>
-                <View style={styles.categoryHeader}>
-                    <Text style = {styles.titlecategory}>Category</Text>
-                    <TouchableOpacity>
-                        <Image source={require('../img/3gach.png')} style={styles.img3gachCategory} />
+                <View style={styles.gioiThieu}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Profile', { user })}>
+                        <Image
+                            source={user.avatar ? { uri: `http://localhost:3000/uploads/${user.avatar}` } : require('../img/personicon.png')}
+                            style={styles.imgProfile}
+                        />
                     </TouchableOpacity>
-
+                    <View style={styles.title}>
+                        <Text style={styles.title1}>Welcome!</Text>
+                        <Text style={styles.title2}>{user.username}</Text>
+                    </View>
                 </View>
-
+            </View>
+            {user.username === "admin" ? (
                 <FlatList
-                        data={filteredCategories}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={({ item }) => (
-                           
-                            <View style={styles.categoryItem}>
-                                    <TouchableOpacity>
-                                        <Image source={{ uri: item.image }} style={styles.categoryImage} />
-                                      
-
-                                        <Text style={styles.catoryText}>{item.name}</Text>
-                                    </TouchableOpacity>
-                                   
-                             </View>
-
-                    )}
-                   
-                    
-                    numColumns={4}
-                    contentContainerStyle={styles.contentContainer}
-                
-                />
-
-                
-
-
-            </View>
-            <View style={styles.popularContainer}>
-                <View style={styles.categoryHeader}>
-                    <Text style={styles.titlecategory}>Popular Destination</Text>
-                    <TouchableOpacity>
-                        <Image source={require('../img/3gach.png')} style={styles.img3gachCategory} />
-                    </TouchableOpacity>
-
-                </View>
-
-                    <FlatList
-                     
-                        // data={locations.slice(0,3)}
-                     data={locationsapi.slice(0,3)}
+                    data={users.filter((item) => item.username !== "admin")}
+                    keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
-                        <View style={styles.locationItem}>
-                            <Image source={{ uri: item.image }} style={styles.locationImage} />
-                           
+                        <View style={styles.userItem}>
+                            <Image source={{ uri: `http://localhost:3000/uploads/${item.avatar}` }} style={styles.userAvatar} />
+                            <View style={styles.userInfo}>
+                                <Text style={styles.userName}>{item.username}</Text>
+                            </View>
+                            <View style={styles.actions}>
+                                <TouchableOpacity onPress={() => handleEditUser(item.id)} style={styles.editButton}>
+                                    <Text style={styles.actionText}>Sửa</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => handleDeleteUser(item.id)} style={styles.deleteButton}>
+                                    <Text style={styles.actionText}>Xóa</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-
                     )}
-                    keyExtractor={(item) => item.image}
-                    horizontal
-                 
-                    contentContainerStyle={styles.contentContainer}
+                />
+            ) : (
+                <Text style={styles.message}>Bạn không có quyền truy cập danh sách user.</Text>
+            )}
 
-                    />
-                    
-                {/* // Recomended */}
+            {/* Modal xác nhận xóa */}
+            <Modal
+                transparent={true}
+                animationType="fade"
+                visible={isModalVisible}
+                onRequestClose={cancelDelete}
+            >
+                <View style={styles.modalBackground}>
+                    <View style={styles.modalContainer}>
+                        <Text style={styles.modalTitle}>Xác nhận</Text>
+                        <Text style={styles.modalMessage}>Bạn có chắc chắn muốn xóa user này không?</Text>
 
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity onPress={cancelDelete} style={styles.cancelButton}>
+                                <Text style={styles.buttonText}>Hủy</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={deleteUser} style={styles.confirmButton}>
+                                <Text style={styles.buttonText}>OK</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
-                <View style={styles.popularContainer}>
-                    <View style={styles.categoryHeader}>
-                        <Text style={styles.titlecategory}>Recomended</Text>
+            </Modal>
+             {/* Modal sửa thông tin user */}
+            <Modal
+                transparent={true}
+                animationType="fade"
+                visible={isModalVisible1}
+                onRequestClose={cancelEdit}
+            >
+                <View style={styles.modalBackground}>
+                    <View style={styles.modalContainer}>
+                        <Text style={styles.modalTitle}>Sửa thông tin người dùng</Text>
+
+                        {/* Nhập mật khẩu mới */}
+                        <TextInput
+                            placeholder="Mật khẩu mới"
+                            secureTextEntry
+                            value={newPassword}
+                            onChangeText={setNewPassword}
+                            style={styles.input}
+                        />
+
+                        {/* Chọn ảnh đại diện */}
                        
 
+                        <TouchableOpacity onPress={handleImagePicker} style={styles.photoButton}>
+                            {imageUri ? (<Image source={{ uri: imageUri }} style={styles.newAvatar} />) :
+                                (<Text>Chọn ảnh của bạn</Text>)}
+                        </TouchableOpacity>
+
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity onPress={cancelEdit} style={styles.cancelButton}>
+                                <Text style={styles.buttonText}>Hủy</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={handleSaveChanges} style={styles.confirmButton}>
+                                <Text style={styles.buttonText}>Lưu</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-
-                    <FlatList
-                        // data={locations.slice(4, 6)}
-                        data={locationsapi.slice(4, 6)}
-                        renderItem={({ item }) => (
-                            <View style={styles.recomendedItem}>
-                                <Image source={{ uri: item.image }} style={styles.locationImage} />
-
-                            </View>
-
-                        )}
-                        keyExtractor={(item) => item.image}
-                        horizontal
-                    />
-                    
-
                 </View>
-            
-
-            </ScrollView>
-            <View style={styles.fotter}>
-                <View style={styles.fotterItem}>
-                    <Image source={require('../img/homeicon.png')} style={styles.fotterImage} />
-                    <Text style={styles.fotterText}>Home</Text>
-                </View>
-                <View style={styles.fotterItem}>
-                    <Image source={require('../img/exploreicon.png')} style={styles.fotterImage} />
-                    <Text style={styles.fotterText}>Explore</Text>
-                </View>
-                <View style={styles.fotterItem}>
-                    <Image source={require('../img/searchicon.png')} style={styles.fotterImage} />
-                    <Text style={styles.fotterText}>Search</Text>
-                </View>
-                <View style={styles.fotterItem}>
-                    <Image source={require('../img/profileicon.png')} style={styles.fotterImage} />
-                    <Text style={styles.fotterText}>Profile</Text>
-                </View>
-
-            </View>
+            </Modal>
         </View>
-
     );
 };
 
@@ -203,129 +238,133 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        color: 'white',
-
     },
     header: {
         backgroundColor: '#6426ff',
         paddingVertical: 20,
+        paddingHorizontal: 20,
     },
-    header1: {
-       
-        display: 'flex',
+    gioiThieu: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-
     },
-    
-    
-    imgHeader: {
+    imgProfile: {
         width: 40,
         height: 40,
-        borderRadius: 50,
-    },
-    inputContainer: {
-        width: '70%',
-        borderWidth: 1,
-        borderRadius: 10,
-        display: 'flex',
-        flexDirection: 'row',
-        marginLeft: 20,
-        backgroundColor: 'white',
-    }, searchBox: {
-        paddingVertical: 10,
-        paddingLeft: 10,
-        width: '100%',
-        
-
-    }, imgSearch: {
-        position: 'absolute',
-        right: 0,
-        marginRight: 10,
-        alignItems: 'center',
-    }, imgProfile: {
-        width: 40,
-        height: 40,
-        borderRadius: 50,
-    }, imgBell: {
-        width: 40,
-        height: 40,
-        borderRadius: 50,
-        marginRight: 40,
-    }, header2: {
-        marginTop: 20,
-        display: 'flex',
-        justifyContent: 'space-between',
-        flexDirection: 'row',
-        alignItems: 'center',
-        
-    }, gioiThieu: {
-        display: 'flex',
-        flexDirection: 'row',
-        marginLeft: 30,
-    }, title: {
-        marginLeft: 20,
-        color: 'white',
-    }, title1: {
-        fontWeight: 'bold',
-        fontSize: 20,
-        color: 'white',
-    }
-    , title2: {
-       
-        color: 'white',
-    }, categoryHeader: {
-
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginHorizontal: 30,
-        marginVertical: 20,
-    }, img3gachCategory: {
-        width: 25,
-        height: 25,
-    }, titlecategory: {
-        fontSize: 18,
-    }, categoryItem: {
-        marginLeft: 20,
-        alignItems: 'center',
-        paddingVertical: 10,
-        marginLeft: 25,
-    }, locationImage: {
-        width: 100,
-        height: 100,
         borderRadius: 20,
-        marginLeft: 20,
-    }, recomendedImage:{
-        width: 170,
-        height: 120,
+    },
+    title: {
+        marginLeft: 10,
+    },
+    title1: {
+        fontSize: 18,
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    title2: {
+        color: 'white',
+    },
+    userItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ddd',
+    },
+    userAvatar: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+    },
+    userInfo: {
+        flex: 1,
+        marginLeft: 10,
+    },
+    userName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    actions: {
+        flexDirection: 'row',
+    },
+    editButton: {
+        backgroundColor: '#4caf50',
+        padding: 5,
+        borderRadius: 5,
+        marginRight: 5,
+    },
+    deleteButton: {
+        backgroundColor: '#f44336',
+        padding: 5,
+        borderRadius: 5,
+    },
+    actionText: {
+        color: 'white',
+        fontSize: 12,
+    },
+    message: {
+        textAlign: 'center',
+        marginTop: 20,
+        fontSize: 16,
+        color: '#666',
+    },
+    modalBackground: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContainer: {
+        width: 300,
+        padding: 20,
+        backgroundColor: 'white',
         borderRadius: 10,
-        marginLeft: 15,
-    }, fotter: {
-        display: 'flex',
+        alignItems: 'center',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    modalMessage: {
+        marginVertical: 20,
+        fontSize: 16,
+        textAlign: 'center',
+    },
+    modalActions: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        alignItems: 'center',
-        backgroundColor: '#6426ff',
-        paddingVertical: 40,
         width: '100%',
-        
-    }, fotterImage: {
-        width: 40,
-        height: 40,
-    }, fotterText: {
+    },
+    cancelButton: {
+        backgroundColor: 'red',
+        padding: 10,
+        borderRadius: 5,
+    },
+    confirmButton: {
+        backgroundColor: 'green',
+        padding: 10,
+        borderRadius: 5,
+    },
+    buttonText: {
         color: 'white',
-    }, categoryImage: {
-        
-        width: 65,
-        height: 65,
-        
-    }, catoryText: {
-        marginLeft: 10,
-    }
-
-
+        fontWeight: 'bold',
+    },
+    buttonChonAnh: {
+        backgroundColor: '#f0f0f0',
+        padding: 10,
+        borderRadius: 5,
+        marginBottom: 10,
+    },
+    input: {
+        marginTop: 10,
+        width: '100%',
+        padding: 10,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        marginBottom: 10,
+    }   ,photoButton: { alignItems: 'center', justifyContent: 'center', width: 150, height: 150, backgroundColor: '#e0e0e0', borderRadius: 10, marginBottom: 20 },
+    newAvatar: { width: 150, height: 150 ,borderRadius: 10 },
 });
+
 export default Screen01;

@@ -32,7 +32,7 @@ const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: '',
-    port: 3306,
+    port: 3307,
     database: 'user'
 });
 db.connect(err => {
@@ -45,6 +45,81 @@ app.get('/users', (req, res) => {
     db.query('select * from users', (err, kq) => {
         if (err) throw err;
         res.json(kq);
+    });
+});
+
+// Xóa user theo id
+app.delete('/users/:id', (req, res) => {
+   
+    const {id } = req.params; // lấy từ đường dẫn
+    console.log('ID:', req.params);
+
+    // Câu lệnh SQL để xóa user theo ID
+    const query = 'DELETE FROM users WHERE id = ?';
+
+    // Thực hiện truy vấn MySQL
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Lỗi khi xóa user:', err);
+            res.status(500).json({ message: 'Lỗi server. Không thể xóa user.' });
+        } else if (result.affectedRows === 0) {
+            // Nếu không có hàng nào bị ảnh hưởng, nghĩa là user không tồn tại
+            res.status(404).json({ message: 'User không tồn tại.' });
+        } else {
+            res.status(200).json({ message: 'Xóa user thành công.' });
+        }
+    });
+});
+
+// Endpoint PUT để cập nhật thông tin người dùng
+app.put('/users/:userId', upload.single('avatar'), (req, res) => {
+    const userId = req.params.userId; // Lấy userId từ URL
+    const { password } = req.body;   // Lấy mật khẩu mới từ body
+    const avatar = req.file ? req.file.filename : null; // Lấy tên file avatar nếu có
+    console.log(' req.params.userId:', req.params.userId);
+    console.log(' password:', req.body);
+    console.log('  req.file:', req.file);
+
+    // Kiểm tra người dùng có tồn tại không
+    const sqlCheck = 'SELECT * FROM users WHERE id = ?';
+    db.query(sqlCheck, [userId], (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ success: false, message: 'Lỗi server' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ success: false, message: 'Người dùng không tồn tại' });
+        }
+
+        // Tạo câu lệnh cập nhật linh hoạt
+        let updateQuery = 'UPDATE users SET ';
+        const updateFields = [];
+        const updateValues = [];
+
+        if (password) {
+            updateFields.push('password = ?');
+            updateValues.push(password);
+        }
+        if (avatar) {
+            updateFields.push('avatar = ?');
+            updateValues.push(avatar);
+        }
+
+        if (updateFields.length === 0) {
+            return res.status(400).json({ success: false, message: 'Không có dữ liệu để cập nhật' });
+        }
+
+        updateQuery += updateFields.join(', ') + ' WHERE id = ?';
+        updateValues.push(userId);
+
+        // Thực hiện câu lệnh cập nhật
+        db.query(updateQuery, updateValues, (err, result) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ success: false, message: 'Lỗi khi cập nhật dữ liệu' });
+            }
+            res.json({ success: true, message: 'Thông tin người dùng đã được cập nhật' });
+        });
     });
 });
 

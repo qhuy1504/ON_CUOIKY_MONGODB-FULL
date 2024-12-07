@@ -1,6 +1,7 @@
 import axios from 'axios';
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
+import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 
 const ProfileScreen = ({ route, navigation }) => {
     const [oldPassword, setOldPassword] = useState('');
@@ -9,21 +10,21 @@ const ProfileScreen = ({ route, navigation }) => {
 
     const handleChangePassword = async () => {
         try {
-            const response = await axios.put('http://192.168.2.144:3000/reset-password', {
+            const response = await axios.put('http://localhost:3000/reset-password', {
                 username: user.username,
                 password: newPassword,
             });
-            if (response.status === 200 && user.password === oldPassword)  {
+            if (response.status === 200 && user.password === oldPassword) {
                 alert('Đổi mật khẩu thành công');
                 navigation.navigate('Login');
             } else if (response.status === 200 && user.password !== oldPassword) {
                 alert('Mật khẩu cũ không đúng, vui lòng nhập lại');
-               
-            } 
+
+            }
             else {
                 alert('Đổi mật khẩu thất bại: ');
             }
-            
+
         } catch (e) {
             console.error(e);
             alert('Đã xảy ra lỗi trong quá trình đổi mật khẩu.');
@@ -34,9 +35,16 @@ const ProfileScreen = ({ route, navigation }) => {
         // Xóa dữ liệu người dùng hoặc token nếu cần thiết
         navigation.navigate('Login'); // Quay về màn hình đăng nhập
     };
+    const goToBack = () => {
+        // Xóa dữ liệu người dùng hoặc token nếu cần thiết
+        navigation.navigate('Screen01', {
+            user: user,  // Thành phố khởi hành
+
+        });
+    };
     const handleDeleteAccount = async () => {
         try {
-            const response = await axios.delete('http://192.168.2.144:3000/delete-account', {
+            const response = await axios.delete('http://localhost:3000/delete-account', {
                 data: { username: user.username }
             });
 
@@ -55,7 +63,10 @@ const ProfileScreen = ({ route, navigation }) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Profile</Text>
+            <TouchableOpacity style={styles.iconmuiten} onPress={() => goToBack()}>
+                <MaterialIcons name="arrow-back" size={30} color="black" />
+            </TouchableOpacity>
+          
             <Text style={styles.label}>Change Password</Text>
             <TextInput
                 style={styles.input}
@@ -71,9 +82,9 @@ const ProfileScreen = ({ route, navigation }) => {
                 value={newPassword}
                 onChangeText={setNewPassword}
             />
-            <Button title="Submit" onPress={handleChangePassword} />
+            <Button title="Submit" onPress={() => handleChangePassword()} />
             {/* Nút Xóa Tài Khoản */}
-            <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
+            <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteAccount()}>
                 <Text style={styles.deleteButtonText}>Xóa Tài Khoản</Text>
             </TouchableOpacity>
 
@@ -111,6 +122,11 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
+    iconmuiten: {
+        position: 'absolute',
+        top: 20,
+        left: 20,
+    }
 });
 
 export default ProfileScreen;

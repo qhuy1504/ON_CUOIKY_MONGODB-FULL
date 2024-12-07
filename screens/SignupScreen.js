@@ -64,7 +64,7 @@ const SignupScreen = ({ navigation }) => {
         console.log('Photo data:', photo);
 
         try {
-            const response = await axios.post('http://192.168.2.144:3000/register', formData, {
+            const response = await axios.post('http://localhost:3000/register', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
