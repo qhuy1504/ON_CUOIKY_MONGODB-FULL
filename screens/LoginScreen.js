@@ -15,23 +15,23 @@ const LoginScreen = ({ navigation }) => {
                 username,
                 password
             });
-        
-            console.log('Đăng nhập:', username, password);
+
+            console.log('Đăng nhập:', response);
             //Ktra phản hồi
             if (response.status === 200 && response.data.success) {
-                navigation.navigate('Screen01', { user: response.data.user});
+                navigation.navigate('Screen01', { user: response.data.user });
             } else {
                 alert('Đăng nhập thất bại: ' + response.data.message);
-        
+
             }
         } catch (error) {
             console.error('Lỗi: ', error);
             alert('Đã xảy ra lỗi trong quá trình đăng nhập.');
         }
     };
-  
- 
-        
+
+
+
 
     return (
         <View style={styles.container}>
@@ -55,7 +55,7 @@ const LoginScreen = ({ navigation }) => {
             <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
                 <Text style={styles.link}>Chưa có tài khoản? Đăng ký</Text>
             </TouchableOpacity>
-          
+
         </View>
     );
 };

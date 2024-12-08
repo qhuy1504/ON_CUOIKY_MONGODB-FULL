@@ -33,18 +33,20 @@ const Screen01 = ({ route, navigation }) => {
     const handleDeleteUser = (userId) => {
         // Hiển thị Modal xác nhận xóa
         setUserIdToDelete(userId);
+        console.log("userId:", userId);
         setIsModalVisible(true);
     };
 
     const deleteUser = () => {
         // API endpoint để xóa user
-        axios.delete(`http://localhost:3000/users/${userIdToDelete}`)
+        axios.delete(`http://localhost:3000/users/${userIdToDelete}`) 
             .then(() => {
-                setUsers(users.filter(user => user.id !== userIdToDelete)); // Cập nhật danh sách user
+                setUsers(users.filter(user => user._id !== userIdToDelete)); // Cập nhật danh sách user
                 setIsModalVisible(false); // Đóng Modal sau khi xóa thành công
                 alert("Thành công", "Đã xóa user.");
             })
             .catch(error => console.error("Lỗi khi xóa user:", error)); // Log lỗi nếu xảy ra
+        console.log("userIdToDelete:", userIdToDelete);
     };
 
     const cancelDelete = () => {
@@ -146,7 +148,7 @@ const Screen01 = ({ route, navigation }) => {
             {user.username === "admin" ? (
                 <FlatList
                     data={users.filter((item) => item.username !== "admin")}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => item._id.toString()}
                     renderItem={({ item }) => (
                         <View style={styles.userItem}>
                             <Image source={{ uri: `http://localhost:3000/uploads/${item.avatar}` }} style={styles.userAvatar} />
@@ -154,10 +156,10 @@ const Screen01 = ({ route, navigation }) => {
                                 <Text style={styles.userName}>{item.username}</Text>
                             </View>
                             <View style={styles.actions}>
-                                <TouchableOpacity onPress={() => handleEditUser(item.id)} style={styles.editButton}>
+                                <TouchableOpacity onPress={() => handleEditUser(item._id)} style={styles.editButton}>
                                     <Text style={styles.actionText}>Sửa</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleDeleteUser(item.id)} style={styles.deleteButton}>
+                                <TouchableOpacity onPress={() => handleDeleteUser(item._id)} style={styles.deleteButton}>
                                     <Text style={styles.actionText}>Xóa</Text>
                                 </TouchableOpacity>
                             </View>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Modal , Platform} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Modal, Platform } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import axios from 'axios';
 
@@ -126,12 +126,13 @@ const SignupScreen = ({ navigation }) => {
                         <Text style={styles.modalTitle}>THÔNG BÁO</Text>
                         <Text style={styles.modalMessage}>{errorMessage || "Đăng ký thành công"}</Text>
                         <View style={styles.modalButtons}>
-                       
+
                             <TouchableOpacity style={styles.modalButton} onPress={() => {
                                 setModalVisibility(false);
                                 if (isSignupSuccess) { // Chỉ điều hướng khi đăng ký thành công
                                     navigation.navigate('Login');
-                                } }}>
+                                }
+                            }}>
                                 <Text style={styles.modalButtonText2}>Đồng ý</Text>
                             </TouchableOpacity>
                         </View>
@@ -152,45 +153,45 @@ const styles = StyleSheet.create({
     link: { color: 'blue', marginTop: 50 },
     photoButton: { alignItems: 'center', justifyContent: 'center', width: 150, height: 150, backgroundColor: '#e0e0e0', borderRadius: 75, marginBottom: 20 },
     photo: { width: 150, height: 150, borderRadius: 75 },
-     modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
 
-}, modalContent: {
-    width: '80%',
-    padding: 20,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    alignItems: 'center',
-},
+    }, modalContent: {
+        width: '80%',
+        padding: 20,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        alignItems: 'center',
+    },
     modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-},
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
     modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    width: '100%',
-    marginTop: 20,
-},
+        flexDirection: 'row',
+        justifyContent: 'center',
+        width: '100%',
+        marginTop: 20,
+    },
     modalButtonText2: {
-    padding: 10,
-    backgroundColor: 'green',
-    borderRadius: 5,
-    color: '#fff',
-    
-    
-},
+        padding: 10,
+        backgroundColor: 'green',
+        borderRadius: 5,
+        color: '#fff',
+
+
+    },
     modalButtonText: {
-    padding: 10,
-    marginHorizontal: 10,
-    backgroundColor: 'red',
-    borderRadius: 5,
-    color: '#fff',
-},
+        padding: 10,
+        marginHorizontal: 10,
+        backgroundColor: 'red',
+        borderRadius: 5,
+        color: '#fff',
+    },
 });
 
 export default SignupScreen;

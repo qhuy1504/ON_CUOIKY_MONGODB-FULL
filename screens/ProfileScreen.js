@@ -35,13 +35,6 @@ const ProfileScreen = ({ route, navigation }) => {
         // Xóa dữ liệu người dùng hoặc token nếu cần thiết
         navigation.navigate('Login'); // Quay về màn hình đăng nhập
     };
-    const goToBack = () => {
-        // Xóa dữ liệu người dùng hoặc token nếu cần thiết
-        navigation.navigate('Screen01', {
-            user: user,  // Thành phố khởi hành
-
-        });
-    };
     const handleDeleteAccount = async () => {
         try {
             const response = await axios.delete('http://localhost:3000/delete-account', {
@@ -60,13 +53,21 @@ const ProfileScreen = ({ route, navigation }) => {
         }
     };
 
+    const goToBack = () => {
+        // Xóa dữ liệu người dùng hoặc token nếu cần thiết
+        navigation.navigate('Screen01', {
+            user: user,  // Thành phố khởi hành
+
+        });
+    };
+
 
     return (
         <View style={styles.container}>
             <TouchableOpacity style={styles.iconmuiten} onPress={() => goToBack()}>
                 <MaterialIcons name="arrow-back" size={30} color="black" />
             </TouchableOpacity>
-          
+           
             <Text style={styles.label}>Change Password</Text>
             <TextInput
                 style={styles.input}
@@ -82,9 +83,9 @@ const ProfileScreen = ({ route, navigation }) => {
                 value={newPassword}
                 onChangeText={setNewPassword}
             />
-            <Button title="Submit" onPress={() => handleChangePassword()} />
+            <Button title="Submit" onPress={handleChangePassword} />
             {/* Nút Xóa Tài Khoản */}
-            <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteAccount()}>
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
                 <Text style={styles.deleteButtonText}>Xóa Tài Khoản</Text>
             </TouchableOpacity>
 
@@ -122,11 +123,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
-    iconmuiten: {
-        position: 'absolute',
-        top: 20,
-        left: 20,
-    }
 });
 
 export default ProfileScreen;
