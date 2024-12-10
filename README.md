@@ -7,13 +7,38 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 1. Install dependencies
 
    ```bash
-   npm install
-   ```
+   npm install --global expo-cli 
+   npx create-expo-app tranquochuy
+   cd tranquochuy
 
-2. Start the app
+   ```
+1. Install dependencies
 
    ```bash
-    npx expo start
+   Install navigation và icon(fontawesome): Chạy các lệnh sau
+   npm install @react-navigation/native @react-navigation/stack react-native-gesture-handler react-native-reanimated react-native-screens react-native-safe-area-context @react-native-community/masked-view
+   npm install react-native-vector-icons
+   npm install axios
+   npm install react-native-image-picker @react-native-picker/picker react-datepicker
+
+TẠO MÔI TRƯỜNG NODE JS ĐỂ TẠO SERVER
+
+1. mkdir backend
+
+cd backend
+
+npm init -y
+
+2. npm install express cors multer mongoose
+3. node server.js
+
+XEM IP
+ipconfig
+   ```
+3. Start the app
+
+   ```bash
+   npm start
    ```
 
 In the output, you'll find options to open the app in a
