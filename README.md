@@ -7,9 +7,12 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 1. Install dependencies
 
    ```bash
-   npm install --global expo-cli 
-   npx create-expo-app tranquochuy
-   cd tranquochuy
+  npm install -g expo-cli   
+npx create-expo-app YOUR_PROJECT --template blank
+
+cd YOUR_PROJECT
+
+npx expo install react-dom react-native-web @expo/metro-runtime
 
    ```
 1. Install dependencies
