@@ -3,10 +3,16 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Modal, Plat
 import { launchImageLibrary } from 'react-native-image-picker';
 import axios from 'axios';
 
+import { Picker } from '@react-native-picker/picker'; // Thêm import Picker
+import "react-datepicker/dist/react-datepicker.css";
+import DatePicker from "react-datepicker";
+
 const SignupScreen = ({ navigation }) => {
     const [photo, setPhoto] = useState(null);
     const [username, setUserName] = useState('');
     const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('');
+    const [birthday, setBirthday] = useState(new Date());
     const [modalVisibility, setModalVisibility] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [imageUri, setImageUri] = useState(null);
@@ -44,9 +50,9 @@ const SignupScreen = ({ navigation }) => {
         }
     };
 
-
+    const formattedBirthday = new Date(birthday).toISOString().split('T')[0];
     const handleSignup = async () => {
-        if (!username || !password || !photo) {
+        if (!username || !password || !photo || !email || !birthday) {
             setErrorMessage('Vui lòng nhập đầy đủ thông tin');
             setIsSignupSuccess(false);  // đăng ký không thành công
             setModalVisibility(true);
@@ -56,6 +62,8 @@ const SignupScreen = ({ navigation }) => {
         const formData = new FormData();
         formData.append('username', username);
         formData.append('password', password);
+        formData.append('email', email);
+        formData.append('birthday', formattedBirthday);
         if (Platform.OS === 'web') {
             formData.append('avatar', photo);
         } else {
@@ -94,19 +102,50 @@ const SignupScreen = ({ navigation }) => {
                 {imageUri ? (<Image source={{ uri: imageUri }} style={styles.photo} />) :
                     (<Text>Chọn ảnh của bạn</Text>)}
             </TouchableOpacity>
-            <TextInput
-                placeholder="Username"
-                style={styles.input}
-                value={username}
-                onChangeText={setUserName}
-            />
-            <TextInput
-                placeholder="Mật khẩu"
-                style={styles.input}
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-            />
+            <View style={styles.inputContainer}>
+                <Text style={styles.label}>Tài khoản</Text>
+                <TextInput
+                    placeholder="Username"
+                    style={styles.input2}
+                    value={username}
+                    onChangeText={setUserName}
+                />
+            </View>
+
+            <View style={styles.inputContainer}>
+                <Text style={styles.label}>Mật khẩu</Text>
+                <TextInput
+
+                    placeholder="Mật khẩu"
+                    style={styles.input2}
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
+                />
+            </View>
+
+            <View style={styles.inputContainer}>
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                    placeholder="Email"
+                    style={styles.input2}
+
+                    value={email}
+                    onChangeText={setEmail}
+                />
+
+            </View>
+
+            <View style={styles.inputContainer}>
+                <Text style={styles.label}>Birthday</Text>
+                <DatePicker
+                    selected={birthday}
+                    onChange={setBirthday}
+                    dateFormat={"dd/MM/yyyy"}
+                    customInput={<TextInput style={styles.input2} />}
+                />
+
+            </View>
             <TouchableOpacity style={styles.button} onPress={handleSignup}>
                 <Text style={styles.buttonText}>Đăng Ký</Text>
             </TouchableOpacity>
@@ -145,13 +184,13 @@ const SignupScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+    container: { flex: 1, justifyContent: 'center', marginLeft: '10%' },
+    header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, marginLeft: '30%' },
     input: { width: '80%', padding: 10, marginVertical: 10, borderWidth: 1, borderRadius: 5 },
-    button: { backgroundColor: 'blue', padding: 15, borderRadius: 5 },
+    button: { backgroundColor: 'blue', padding: 15, borderRadius: 5, width: 100, alignItems: 'center', marginLeft: '30%' },
     buttonText: { color: 'white' },
     link: { color: 'blue', marginTop: 50 },
-    photoButton: { alignItems: 'center', justifyContent: 'center', width: 150, height: 150, backgroundColor: '#e0e0e0', borderRadius: 75, marginBottom: 20 },
+    photoButton: { alignItems: 'center', justifyContent: 'center', width: 150, height: 150, backgroundColor: '#e0e0e0', borderRadius: 75, marginBottom: 20, marginLeft: '10%' },
     photo: { width: 150, height: 150, borderRadius: 75 },
     modalContainer: {
         flex: 1,
@@ -191,7 +230,24 @@ const styles = StyleSheet.create({
         backgroundColor: 'red',
         borderRadius: 5,
         color: '#fff',
+    }, inputContainer: {
+
+        width: '80%',
+        marginVertical: 10,
+    }, label: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 5,
     },
+    input2: {
+
+        height: 40,
+        backgroundColor: '#ccc',
+        borderWidth: 1,
+        paddingHorizontal: 10,
+        borderRadius: 5,
+    }
 });
 
 export default SignupScreen;

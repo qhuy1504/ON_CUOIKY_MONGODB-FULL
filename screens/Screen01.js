@@ -5,18 +5,28 @@ import * as ImagePicker from 'expo-image-picker';
 // npm install expo-image-picker react-native-image-picker
 import { launchImageLibrary } from 'react-native-image-picker';
 
+
+import { Picker } from '@react-native-picker/picker'; // Thêm import Picker
+import "react-datepicker/dist/react-datepicker.css";
+import DatePicker from "react-datepicker";
+
 const Screen01 = ({ route, navigation }) => {
     const [users, setUsers] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false); // State để điều khiển hiển thị Modal
-    
+
     const [userIdToEdit, setUserIdToEdit] = useState(null); // Lưu trữ ID người dùng cần sửa
     const [userIdToDelete, setUserIdToDelete] = useState(null); // Lưu trữ ID người dùng cần xóa
     const [isModalVisible1, setIsModalVisible1] = useState(false); // State để điều khiển hiển thị Modal
+
     const [newPassword, setNewPassword] = useState(""); // Lưu mật khẩu mới
+    const [newEmail, setNewEmail] = useState(""); // Lưu email mới
+    const [newBirthday, setNewBirthday] = useState(new Date()); // Lưu email mới
     const [newAvatar, setNewAvatar] = useState(null); // Lưu ảnh đại diện mới
+
     const { user } = route.params || { username: "Guest", avatar: null };
     const [imageUri, setImageUri] = useState(null);
     const [triggerUpdate, setTriggerUpdate] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     
 
     useEffect(() => {
@@ -28,6 +38,25 @@ const Screen01 = ({ route, navigation }) => {
         }
     }, [user.username, triggerUpdate]);
 
+    //SỬA FULL THÔNG TIN
+
+    const fetchUserInfo = async (userId) => {
+        try {
+            const response = await axios.get(`http://localhost:3000/users/${userId}`);
+            console.log('User info:', response.data);
+            const userData = response.data; // Giả sử API trả về dữ liệu người dùng
+
+            // Cập nhật các state với thông tin người dùng
+            setNewEmail(userData.email);
+            setNewPassword(userData.password);
+            setNewBirthday(new Date(userData.birthday));
+            setImageUri(userData.avatar ? `http://localhost:3000/uploads/${userData.avatar}` : null); // Cập nhật ảnh đại diện
+        } catch (error) {
+            console.error("Lỗi khi lấy thông tin người dùng:", error);
+            alert('Không thể tải thông tin người dùng');
+        }
+    };
+
  
 
     const handleDeleteUser = (userId) => {
@@ -35,6 +64,7 @@ const Screen01 = ({ route, navigation }) => {
         setUserIdToDelete(userId);
         console.log("userId:", userId);
         setIsModalVisible(true);
+        
     };
 
     const deleteUser = () => {
@@ -57,6 +87,8 @@ const Screen01 = ({ route, navigation }) => {
         // Xử lý mở Modal sửa user
         setUserIdToEdit(userId);
         setIsModalVisible1(true); // Mở Modal
+        // Gọi API để lấy thông tin người dùng
+        fetchUserInfo(userId);
     };
     const cancelEdit = () => {
         setIsModalVisible1(false); // Đóng Modal khi hủy
@@ -102,6 +134,9 @@ const Screen01 = ({ route, navigation }) => {
         }
         const formData = new FormData();
         formData.append('password', newPassword); // Nếu muốn cập nhật mật khẩu
+        formData.append('email', newEmail);
+        const localDate = newBirthday.toLocaleDateString('en-CA');
+        formData.append('birthday', localDate);
         if (Platform.OS === 'web') {
             formData.append('avatar', newAvatar);
         } else {
@@ -128,6 +163,11 @@ const Screen01 = ({ route, navigation }) => {
             console.error('Lỗi khi cập nhật user:', error.response?.data || error.message);
         }
     };
+    //Hàm lọc danh sách người dùng
+    const filterUser = () => {
+        return users.filter((item) => item.username.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+
 
     return (
         <View style={styles.container}>
@@ -144,10 +184,24 @@ const Screen01 = ({ route, navigation }) => {
                         <Text style={styles.title2}>{user.username}</Text>
                     </View>
                 </View>
+                
             </View>
+            <View style={styles.inputContainer}>
+                <Text style={styles.label}>Search</Text>
+                <TextInput
+                    style={styles.input2}
+                    placeholder="Tìm kiếm theo username"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+
+                />
+
+            </View>
+            
+            
             {user.username === "admin" ? (
                 <FlatList
-                    data={users.filter((item) => item.username !== "admin")}
+                    data={filterUser().filter((item) => item.username !== "admin")}
                     keyExtractor={(item) => item._id.toString()}
                     renderItem={({ item }) => (
                         <View style={styles.userItem}>
@@ -194,6 +248,7 @@ const Screen01 = ({ route, navigation }) => {
                 </View>
             </Modal>
              {/* Modal sửa thông tin user */}
+            {/* Modal sửa thông tin user */}
             <Modal
                 transparent={true}
                 animationType="fade"
@@ -204,22 +259,57 @@ const Screen01 = ({ route, navigation }) => {
                     <View style={styles.modalContainer}>
                         <Text style={styles.modalTitle}>Sửa thông tin người dùng</Text>
 
+
+
                         {/* Nhập mật khẩu mới */}
-                        <TextInput
-                            placeholder="Mật khẩu mới"
-                            secureTextEntry
-                            value={newPassword}
-                            onChangeText={setNewPassword}
-                            style={styles.input}
-                        />
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Mật khẩu</Text>
+                            <TextInput
+                                placeholder="Mật khẩu mới"
+
+                                value={newPassword}
+                                onChangeText={setNewPassword}
+                                style={styles.input}
+                            />
+                        </View>
+
+                        {/* Nhập email mới */}
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Email</Text>
+                            <TextInput
+                                placeholder="Email"
+                                value={newEmail}
+                                onChangeText={setNewEmail}
+                                style={styles.input}
+                            />
+                        </View>
+
 
                         {/* Chọn ảnh đại diện */}
-                       
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Ảnh đại diện</Text>
 
-                        <TouchableOpacity onPress={handleImagePicker} style={styles.photoButton}>
-                            {imageUri ? (<Image source={{ uri: imageUri }} style={styles.newAvatar} />) :
-                                (<Text>Chọn ảnh của bạn</Text>)}
-                        </TouchableOpacity>
+
+                            <TouchableOpacity onPress={handleImagePicker} style={styles.photoButton}>
+                                {imageUri ? (<Image source={{ uri: imageUri }} style={styles.newAvatar} />) :
+                                    (<Text>Chọn ảnh của bạn</Text>)}
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Nhập ngày sinh mới */}
+
+
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Ngày sinh</Text>
+
+                            <DatePicker
+                                selected={newBirthday}
+                                onChange={setNewBirthday}
+                                dateFormat={"dd/MM/yyyy"}
+                                customInput={<TextInput style={styles.input2} />}
+                            />
+                        </View>
+
 
                         <View style={styles.modalActions}>
                             <TouchableOpacity onPress={cancelEdit} style={styles.cancelButton}>
@@ -317,7 +407,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContainer: {
-        width: 300,
+        width: 500,
         padding: 20,
         backgroundColor: 'white',
         borderRadius: 10,
@@ -365,8 +455,23 @@ const styles = StyleSheet.create({
         borderColor: '#ccc',
         borderRadius: 5,
         marginBottom: 10,
-    }   ,photoButton: { alignItems: 'center', justifyContent: 'center', width: 150, height: 150, backgroundColor: '#e0e0e0', borderRadius: 10, marginBottom: 20 },
-    newAvatar: { width: 150, height: 150 ,borderRadius: 10 },
+    }, photoButton: { alignItems: 'center', justifyContent: 'center', width: 150, height: 150, backgroundColor: '#e0e0e0', borderRadius: 10, marginBottom: 20 },
+    newAvatar: { width: 150, height: 150, borderRadius: 10 },
+    inputContainer: {
+        marginVertical: 10,
+    }, label: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 5,
+    },
+    input2: {
+        height: 40,
+        backgroundColor: '#ccc',
+        borderWidth: 1,
+        paddingHorizontal: 10,
+        borderRadius: 5,
+    }
 });
 
 export default Screen01;

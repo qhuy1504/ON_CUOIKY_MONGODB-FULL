@@ -22,6 +22,8 @@ mongoose.connect('mongodb://localhost:27017/react', {
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, sparse: true },
     password: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    birthday: { type: Date, required: true },
     avatar: { type: String, default: 'default.png' }
 }, { versionKey: false });
 
@@ -53,10 +55,37 @@ app.get('/users', async (req, res) => {
     }
 });
 
+app.get('/users/:_id', async (req, res) => {
+    const { _id } = req.params; // Lấy _id từ đường dẫn
+    console.log('_id:', _id); // Kiểm tra _id
+
+    // Kiểm tra _id hợp lệ
+    if (!mongoose.Types.ObjectId.isValid(_id)) {
+        return res.status(400).json({ message: 'ID không hợp lệ' });
+    }
+
+    try {
+        // Tìm kiếm user theo _id
+        const user = await User.findById(_id);
+
+        if (!user) {
+            // Nếu không tìm thấy user với _id
+            return res.status(404).json({ message: 'User không tồn tại.' });
+        }
+
+        // Trả về thông tin user
+        res.status(200).json(user);
+    } catch (err) {
+        console.error('Lỗi khi lấy thông tin user:', err);
+        res.status(500).json({ message: 'Lỗi server. Không thể lấy thông tin user.' });
+    }
+});
+
+
 // Đăng ký người dùng mới
 // const { v4: uuidv4 } = require('uuid');
 app.post('/register', upload.single('avatar'), async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, email, birthday } = req.body;
     const avatar = req.file ? req.file.filename : 'default.png';
     // const id = uuidv4(); // Tạo id duy nhất
 
@@ -68,7 +97,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         }
 
         // Tạo người dùng mới
-        const newUser = new User({ username, password, avatar });
+        const newUser = new User({ username, password, avatar, email, birthday });
         await newUser.save();
         res.json({ success: true, message: 'Đã thêm người dùng' });
     } catch (err) {
@@ -165,7 +194,7 @@ app.delete('/users/:_id', async (req, res) => {
 
 app.put('/users/:userId', upload.single('avatar'), async (req, res) => {
     const userId = req.params.userId; // Lấy userId từ URL
-    const { password } = req.body;   // Lấy mật khẩu mới từ body
+    const { password, email, birthday } = req.body;   // Lấy mật khẩu mới từ body
     const avatar = req.file ? req.file.filename : null; // Lấy tên file avatar nếu có
 
     console.log('req.params.userId:', req.params.userId);
@@ -183,6 +212,12 @@ app.put('/users/:userId', upload.single('avatar'), async (req, res) => {
         // Cập nhật thông tin nếu có thay đổi
         if (password) {
             user.password = password; // Cập nhật mật khẩu
+        }
+        if (email) {
+            user.email = email; // Cập nhật email
+        }
+        if (birthday) {
+            user.birthday = birthday; // Cập nhật birthDay
         }
 
         if (avatar) {
